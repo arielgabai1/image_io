@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.terrygilliam</groupId>
         <artifactId>terrygilliam</artifactId>
-        <version>3.5-SNAPSHOT</version>
+        <version>3.7</version>
     </parent>
     <groupId>com.terrygilliam.common</groupId>
     <artifactId>common</artifactId>
