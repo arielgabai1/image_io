@@ -41,8 +41,8 @@ pipeline {
                         // Commit the Release and Tag it
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
-                            git commit -am 'Release ${params.Release_Version}'
-                            git tag -a v${params.Release_Version} -m 'Release ${params.Release_Version}'
+                            git commit -am 'Release ${params.Release_Version} [skip ci]'
+                            git tag -a v${params.Release_Version} -m 'Release ${params.Release_Version} [skip ci]'
                             git push origin v${params.Release_Version}
                         """
 
@@ -55,7 +55,7 @@ pipeline {
                         sh "mvn versions:set -DnewVersion=${nextVer} -DgenerateBackupPoms=false"
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
-                            git commit -am 'Prepare next ${nextVer} [skip ci]'
+                            git commit -am 'Bump to ${nextVer} [skip ci]'
                             git push origin HEAD:main
                         """
                     }
