@@ -13,7 +13,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'ARTIFACTORY_SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                         script {
-                            // If this is a release, switch to the specific version (x.y)
+                            // If this is a release, switch to the specific version (x.y.z)
                             if (params.Release_Version) {
                                 sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false"
                             }
@@ -30,7 +30,6 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'USER')]) {
                     script {
-                        // We set the command in an env var for reuse in this block or repeat it
                         def gitCmd = 'ssh -i $KEY -o StrictHostKeyChecking=no'
                         sh "git config user.email 'jenkins@example.com' && git config user.name 'Jenkins CI'"
 
@@ -42,12 +41,12 @@ pipeline {
                             git push origin v${params.Release_Version}
                         """
 
-                        // Auto-calculate Next Version
+                        // calculate Next Version
                         def tokens = params.Release_Version.tokenize('.')
                         tokens[-1] = (tokens.last().toInteger() + 1).toString()
                         def nextVer = tokens.join('.') + "-SNAPSHOT"
 
-                        // Set Next Version, Commit, and Push Main
+                        // Set next Version, commit, and push to main
                         sh "mvn versions:set -DnewVersion=${nextVer} -DgenerateBackupPoms=false"
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
@@ -59,4 +58,4 @@ pipeline {
             }
         }
     }
-}
+}    
