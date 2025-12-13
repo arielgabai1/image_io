@@ -8,10 +8,6 @@ pipeline {
         string(name: 'Release_Version', defaultValue: '', description: 'Please specify a version for release (x.y.z). Leave empty for a snapshot build.')
     }
     stages {
-        stage('Checkout') {
-            steps { checkout scm }
-        }
-
         stage('Publish Artifact') {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'ARTIFACTORY_SETTINGS')]) {
