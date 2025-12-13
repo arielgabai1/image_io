@@ -5,7 +5,7 @@ pipeline {
         maven 'Maven 3.6.2'
     }
     parameters {
-        string(name: 'Release_Version', defaultValue: 'x.y.z', description: 'Please specify a Version for release. Leave empty for a snapshot build.')
+        string(name: 'Release_Version', defaultValue: '', description: 'Please specify a Version for release (x.y.z). Leave empty for a snapshot build.')
     }
     stages {
         stage('Checkout') {
