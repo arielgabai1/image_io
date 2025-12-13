@@ -29,7 +29,7 @@ pipeline {
             }
         }
 
-        stage('Update Git') {
+        stage('Update GitLab Repository') {
             when { expression { params.Release_Version != '' } }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'USER')]) {
