@@ -11,7 +11,8 @@ pipeline {
         }
         stage('Build & Deploy') {
             steps {
-                withMaven(maven: 'Maven 3.6.2', jdk: 'OpenJDK 8') {
+                configFile(fileId: 'artifactory-settings', variable : 'Artifactory_Settings')
+                withMaven(maven: 'Maven 3.6.2', jdk: 'OpenJDK 8', mavenSettingsFile: "${Artifactory_Settings}") {
                     sh 'mvn clean deploy'
                 }
             }
