@@ -33,22 +33,38 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'ARTIFACTORY_SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                        script {
-                            // Set release version
-                            sh "mvn versions:set -DnewVersion=${params.RELEASE_VERSION} -DgenerateBackupPoms=false"
-                            
-                            // Deploy release
-                            sh 'mvn clean deploy -s $ARTIFACTORY_SETTINGS'
-                            
-                            // Set next snapshot version
-                            def nextVersion = params.NEXT_VERSION
-                            if (nextVersion == '') {
+                        sshagent(['gitlab-ssh-key']) {
+                            script {
+                                // Set release version
+                                sh "mvn versions:set -DnewVersion=${params.RELEASE_VERSION} -DgenerateBackupPoms=false"
                                 
-                                // Fallback: append -SNAPSHOT to the current release version if no next version is specified
-                                nextVersion = "${params.RELEASE_VERSION}-SNAPSHOT"
-                                echo "No NEXT_VERSION provided. Defaulting to ${nextVersion}"
+                                // Deploy release
+                                sh 'mvn clean deploy -s $ARTIFACTORY_SETTINGS'
+
+                                // Commit and Push Release Tag
+                                sh """
+                                    git config user.email "jenkins@example.com"
+                                    git config user.name "Jenkins CI"
+                                    git commit -am "Release version ${params.RELEASE_VERSION}"
+                                    git tag -a v${params.RELEASE_VERSION} -m "Release version ${params.RELEASE_VERSION}"
+                                    git push origin v${params.RELEASE_VERSION}
+                                """
+                                
+                                // Set next snapshot version
+                                def nextVersion = params.NEXT_VERSION
+                                if (nextVersion == '') {
+                                    // Fallback: append -SNAPSHOT to the current release version if no next version is specified
+                                    nextVersion = "${params.RELEASE_VERSION}-SNAPSHOT"
+                                    echo "No NEXT_VERSION provided. Defaulting to ${nextVersion}"
+                                }
+                                sh "mvn versions:set -DnewVersion=${nextVersion} -DgenerateBackupPoms=false"
+
+                                // Commit and Push Next Version
+                                sh """
+                                    git commit -am "Prepare next development iteration ${nextVersion}"
+                                    git push origin HEAD:main
+                                """
                             }
-                            sh "mvn versions:set -DnewVersion=${nextVersion} -DgenerateBackupPoms=false"
                         }
                     }
                 }
