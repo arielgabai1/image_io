@@ -33,34 +33,41 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'ARTIFACTORY_SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                        sshagent(['gitlab-ssh-key']) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                             script {
-                                // Set release version
-                                sh "mvn versions:set -DnewVersion=${params.RELEASE_VERSION} -DgenerateBackupPoms=false"
-                                
-                                // Deploy release
-                                sh 'mvn clean deploy -s $ARTIFACTORY_SETTINGS'
-
-                                // Commit and Push Release Tag
+                                // Configure Git and SSH
                                 sh """
                                     git config user.email "jenkins@example.com"
                                     git config user.name "Jenkins CI"
+                                    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no"
+                                """
+                                
+                                // 1. Set Release Version
+                                sh "mvn versions:set -DnewVersion=${params.RELEASE_VERSION} -DgenerateBackupPoms=false"
+                                
+                                // 2. Deploy to Artifactory
+                                sh 'mvn clean deploy -s $ARTIFACTORY_SETTINGS'
+
+                                // 3. Push Release Tag
+                                sh """
+                                    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no"
                                     git commit -am "Release version ${params.RELEASE_VERSION}"
                                     git tag -a v${params.RELEASE_VERSION} -m "Release version ${params.RELEASE_VERSION}"
                                     git push origin v${params.RELEASE_VERSION}
                                 """
                                 
-                                // Set next snapshot version
+                                // 4. Prepare Next Snapshot
                                 def nextVersion = params.NEXT_VERSION
                                 if (nextVersion == '') {
-                                    // Fallback: append -SNAPSHOT to the current release version if no next version is specified
                                     nextVersion = "${params.RELEASE_VERSION}-SNAPSHOT"
-                                    echo "No NEXT_VERSION provided. Defaulting to ${nextVersion}"
+                                    echo "Defaulting NEXT_VERSION to ${nextVersion}"
                                 }
+                                
                                 sh "mvn versions:set -DnewVersion=${nextVersion} -DgenerateBackupPoms=false"
 
-                                // Commit and Push Next Version
+                                // 5. Push Next Snapshot
                                 sh """
+                                    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no"
                                     git commit -am "Prepare next development iteration ${nextVersion}"
                                     git push origin HEAD:main
                                 """
