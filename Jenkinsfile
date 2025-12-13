@@ -68,7 +68,7 @@ pipeline {
                                 // 5. Push Next Snapshot
                                 sh """
                                     export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no"
-                                    git commit -am "Prepare next development iteration ${nextVersion}"
+                                    git commit -am "Prepare next development iteration ${nextVersion} [skip ci]"
                                     git push origin HEAD:main
                                 """
                             }
