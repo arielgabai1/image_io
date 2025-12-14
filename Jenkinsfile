@@ -24,7 +24,7 @@ pipeline {
                 }
             }
         }
-// test
+
         stage('Update GitLab Repository') {
             when { expression { params.Release_Version != '' } }
             steps {
@@ -50,7 +50,7 @@ pipeline {
                         sh "mvn versions:set -DnewVersion=${nextVer} -DgenerateBackupPoms=false"
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
-                            git commit -am 'Bump to ${nextVer} [skip ci]'
+                            git commit -am 'Bump to ${nextVer}'
                             git push origin HEAD:main
                         """
                     }
