@@ -5,48 +5,45 @@ pipeline {
         maven 'Maven 3.6.2'
     }
     parameters {
-        string(name: 'Release_Version', defaultValue: '', description: 'Please specify a version for release (x.y.z). Leave empty for a snapshot build.')
+        string(name: 'Release_Version', defaultValue: '', description: 'Release version (x.y.z). Leave empty for a snapshot build.')
     }
     stages {
         stage('Publish Artifact') {
             steps {
-                configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'ARTIFACTORY_SETTINGS')]) {
+                configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                         script {
-                            // If this is a release, switch to the specific version (x.y.z)
+                            // Versioning: Set release version if specified
                             if (params.Release_Version) {
                                 sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false"
                             }
-                            // Deploy to Artifactory
-                            sh 'mvn clean deploy -s $ARTIFACTORY_SETTINGS'
+                            // Build & Deploy: 'deploy' compiles, tests, and uploads to Artifactory.
+                            sh 'mvn clean deploy -s $SETTINGS'
                         }
                     }
                 }
             }
         }
 
-        stage('Update GitLab Repository') {
+        stage('Update Git') {
             when { expression { params.Release_Version != '' } }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'USER')]) {
                     script {
-                        def gitCmd = 'ssh -i $KEY -o StrictHostKeyChecking=no'
-                        sh "git config user.email 'jenkins@example.com' && git config user.name 'Jenkins CI'"
-
-                        // Commit the Release and Tag it
+                        sh "git config user.email 'jenkins@server.com' && git config user.name 'Jenkins CI'"
+                        def gitCmd = "ssh -i $KEY -o StrictHostKeyChecking=no"
+                        
+                        // Commit & Tag the Release
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
                             git commit -am 'Release ${params.Release_Version} [skip ci]'
                             git tag -a v${params.Release_Version} -m 'Release ${params.Release_Version} [skip ci]'
                             git push origin v${params.Release_Version}
                         """
+                        // Calculate Next Snapshot Version
+                        def nextVer = params.Release_Version.replaceFirst(/\d+$/) { (it.toInteger() + 1) } + '-SNAPSHOT'
 
-                        // calculate Next Version
-                        def tokens = params.Release_Version.tokenize('.')
-                        tokens[-1] = (tokens.last().toInteger() + 1).toString()
-                        def nextVer = tokens.join('.') + "-SNAPSHOT"
-
-                        // Set next Version, commit, and push to main
+                        // Update pom.xml & Push to Main
                         sh "mvn versions:set -DnewVersion=${nextVer} -DgenerateBackupPoms=false"
                         sh """
                             export GIT_SSH_COMMAND='${gitCmd}'
@@ -58,4 +55,4 @@ pipeline {
             }
         }
     }
-}    
+}
