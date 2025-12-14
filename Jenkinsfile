@@ -11,15 +11,13 @@ pipeline {
         stage('Set Release Version & Publish Artifact') {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'SETTINGS')]) {
-                    withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                        script {
-                            // Versioning: Set release version if specified
-                            if (params.Release_Version) {
-                                sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false"
-                            }
-                            // Build & Deploy: 'deploy' compiles, tests, and uploads to Artifactory.
-                            sh 'mvn clean deploy -s $SETTINGS'
+                    script {
+                        // Versioning: Set release version if specified
+                        if (params.Release_Version) {
+                            sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false"
                         }
+                        // Build & Deploy: 'deploy' compiles, tests, and uploads to Artifactory.
+                        sh 'mvn clean deploy -s $SETTINGS'
                     }
                 }
             }
