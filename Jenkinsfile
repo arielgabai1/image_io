@@ -8,7 +8,7 @@ pipeline {
         string(name: 'Release_Version', defaultValue: '', description: 'Release version (x.y.z). Leave empty for a snapshot build.')
     }
     stages {
-        stage('Set ReleaseVersion & Publish Artifact') {
+        stage('Set Release Version & Publish Artifact') {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
