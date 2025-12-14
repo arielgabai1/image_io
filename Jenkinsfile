@@ -16,7 +16,7 @@ pipeline {
                         if (params.Release_Version) {
                             sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false -DskipTests"
                         }
-                        // Build & Deploy: 'deploy' compiles, tests, and uploads to Artifactory.
+                        // Build & Deploy: 'deploy' executes phases: clean -> validate -> compile -> test -> package -> verify -> install -> deploy
                         sh 'mvn clean deploy -s $SETTINGS -DskipTests'
                     }
                 }
@@ -29,6 +29,7 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'USER')]) {
                     script {
                         sh "git config user.email 'jenkins@server.com' && git config user.name 'Jenkins CI'"
+
                         // Commit & Tag the Release
                         sh """
                             export GIT_SSH_COMMAND='ssh -i \$KEY -o StrictHostKeyChecking=no'
