@@ -8,7 +8,7 @@ pipeline {
         string(name: 'Release_Version', defaultValue: '', description: 'Release version (x.y.z). Leave empty for a snapshot build.')
     }
     stages {
-        stage('Publish Artifact') {
+        stage('Set ReleaseVersion & Publish Artifact') {
             steps {
                 configFileProvider([configFile(fileId: 'artifactory-settings', variable: 'SETTINGS')]) {
                     withCredentials([usernamePassword(credentialsId: 'artifactory-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Update Git') {
+        stage('Update GitLab Repo') {
             when { expression { params.Release_Version != '' } }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'gitlab-ssh-key', keyFileVariable: 'KEY', usernameVariable: 'USER')]) {
