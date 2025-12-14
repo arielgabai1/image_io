@@ -16,7 +16,7 @@ pipeline {
                         if (params.Release_Version) {
                             sh "mvn versions:set -DnewVersion=${params.Release_Version} -DgenerateBackupPoms=false -DskipTests"
                         }
-                        // Build & Deploy: 'deploy' executes phases: clean -> validate -> compile -> test -> package -> verify -> install -> deploy
+                        // Build & Deploy: 'deploy' executes phases: clean -> validate -> compile -> **test** -> package -> **verify** -> install -> deploy
                         sh 'mvn clean deploy -s $SETTINGS -DskipTests'
                     }
                 }
