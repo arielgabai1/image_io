@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.terrygilliam.imageio</groupId>
         <artifactId>imageio</artifactId>
-        <version>1.10-SNAPSHOT</version>
+        <version>2.1</version>
     </parent>
     <artifactId>imageio-tga</artifactId>
     <name>terrygilliam :: ImageIO :: TGA plugin</name>
